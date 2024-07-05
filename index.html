@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Lucas Number Calculator</title>
+</head>
+
+<body>
+    <h1>Lucas Number Calculator</h1>
+    <p>Enter a number to calculate its Lucas number:</p>
+    <input type="number" id="inputN" placeholder="Enter a number">
+    <button onclick="sendRequest()">Calculate</button>
+    <div id="result"></div>
+    <div id="time"></div>
+
+    <script>
+        function sendRequest() {
+            const n = document.getElementById('inputN').value;
+            console.log('Sending request with n:', n);
+            fetch('http://localhost:8080/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Origin': 'http://localhost:8080'
+                },
+                mode: 'cors',
+                body: JSON.stringify({ n: parseInt(n) })
+            })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data);
+                    document.getElementById('result').innerText = `Lucas Number L${n} = ${data.result}`;
+                    document.getElementById('time').innerText = `Time: ${data.process_time.toFixed(3)} ms`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('result').innerText = 'An error occurred. Please try again.';
+                    document.getElementById('time').innerText = '';
+                });
+        }
+    </script>
+</body>
+
+</html>
