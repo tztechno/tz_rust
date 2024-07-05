@@ -55,6 +55,49 @@ async fn calculate(data: web::Json<InputData>) -> Result<HttpResponse> {
     info!("Received calculation request: {:?}", data);
 ```
 ---
+
+バックエンド側のコードでは、RustとActix-webを使用していることがわかります。この関数`calculate`は、フロントエンドからのPOSTリクエストを受け取って処理します。以下はこの関数の基本的な流れと、その詳細についての説明です。
+
+```rust
+use actix_web::{web, HttpResponse, Result};
+use serde::Deserialize;
+use log::info;
+
+#[derive(Deserialize)]
+struct InputData {
+    n: i32,
+}
+
+async fn calculate(data: web::Json<InputData>) -> Result<HttpResponse> {
+    info!("Received calculation request: {:?}", data);
+
+    let n = data.n;
+    let result = n * n; // 任意の計算（例えば、nの平方）
+
+    Ok(HttpResponse::Ok().json(result))
+}
+```
+
+この関数は以下の処理を行います：
+
+1. **データの受け取り**：
+   - `web::Json<InputData>`としてフロントエンドから送られてきたJSONデータを受け取ります。
+   - `InputData`構造体には、フロントエンドから送信されたJSONデータのフィールド（この場合は`n`）が含まれます。
+
+2. **ログ出力**：
+   - `info!`マクロを使用して、受け取ったリクエストデータをログに出力します。
+
+3. **計算処理**：
+   - `data.n`から`n`を取得し、任意の計算を行います（例として`n`の平方を計算しています）。
+
+4. **レスポンスの返却**：
+   - 計算結果をJSON形式で返します。`HttpResponse::Ok().json(result)`で成功したレスポンスを作成し、計算結果を含めてクライアントに送信します。
+
+これにより、フロントエンドが送信した`n`の値を使用してバックエンドで計算を行い、その結果をJSON形式で返すAPIが構築されます。
+
+全体の流れをまとめると、フロントエンドから送信されたデータをバックエンドで受け取り、処理し、その結果を再びフロントエンドに返すシステムになっています。
+
+---
 ```
         App::new()
             .wrap(cors)
