@@ -177,9 +177,129 @@ async fn main() -> std::io::Result<()> {
                 })
 ```
 ---
+
+このコードは、フロントエンドの`fetch`リクエストが完了した後の処理を示しています。サーバーからのレスポンスを受け取り、結果をHTML要素に表示する部分です。以下は、全体のフロントエンドコードとその説明です。
+
+### フロントエンド（JavaScript）
+
+```javascript
+let n = 10; // 送信する値
+fetch('http://127.0.0.1:8080/calculate', { // サーバーのURLに合わせて変更
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ n: parseInt(n) })
+})
+.then(response => response.json())
+.then(data => {
+    document.getElementById('result').innerText = `Lucas Number L${n} = ${data.result}`;
+    document.getElementById('time').innerText = `Time: ${(data.process_time / 1e9).toFixed(3)} sec`;
+})
+.catch(error => {
+    console.error('Error:', error);
+});
 ```
 
+### バックエンド（Rust）
+
+まず、以下の依存関係が`Cargo.toml`に追加されていることを確認してください：
+
+```toml
+[dependencies]
+actix-web = "4.0"
+actix-files = "0.6"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+env_logger = "0.9"
 ```
+
+次に、以下が完全なバックエンドのコードです：
+
+```rust
+use actix_web::{web, App, HttpResponse, HttpServer, Result, middleware};
+use actix_files as fs;
+use serde::Deserialize;
+use serde::Serialize;
+use log::info;
+use std::time::Instant;
+
+#[derive(Deserialize)]
+struct InputData {
+    n: i32,
+}
+
+#[derive(Serialize)]
+struct OutputData {
+    result: i32,
+    process_time: u128,
+}
+
+async fn calculate(data: web::Json<InputData>) -> Result<HttpResponse> {
+    info!("Received calculation request: {:?}", data);
+
+    let n = data.n;
+
+    // 計算開始時間を記録
+    let start_time = Instant::now();
+
+    // 任意の計算（例えば、nの平方）
+    let result = n * n;
+
+    // 計算終了時間を記録
+    let duration = start_time.elapsed();
+
+    let output = OutputData {
+        result,
+        process_time: duration.as_nanos(),
+    };
+
+    Ok(HttpResponse::Ok().json(output))
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // ロガーを初期化
+    env_logger::init();
+
+    // CORSの設定
+    let cors = actix_cors::Cors::default()
+        .allow_any_origin()
+        .allow_any_method()
+        .allow_any_header();
+
+    HttpServer::new(move || {
+        App::new()
+            .wrap(cors)
+            .wrap(middleware::Logger::default())
+            .service(fs::Files::new("/", "./static").index_file("index.html"))
+            .service(
+                web::resource("/calculate")
+                    .route(web::post().to(calculate))
+                    .route(web::get().to(calculate))
+            )
+    })
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
+}
+```
+
+### 説明
+
+1. **フロントエンド**:
+   - `fetch`を使用してサーバーに`n`の値を送信します。
+   - サーバーからの応答を受け取り、結果をHTML要素に表示します。
+   - `result`には計算結果が、`process_time`には処理時間が含まれています。
+
+2. **バックエンド**:
+   - `InputData`構造体でフロントエンドから受け取るデータを定義します。
+   - `OutputData`構造体でフロントエンドに返すデータを定義します。
+   - `calculate`関数では、受け取った`n`の値を使用して計算を行い、その結果と処理時間を含むJSONレスポンスを返します。
+
+これにより、フロントエンドとバックエンド間でデータのやり取りを行い、計算結果を表示する完全なワークフローが実現できます。
+
 ---
 ```
 
