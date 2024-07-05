@@ -110,6 +110,66 @@ async fn calculate(data: web::Json<InputData>) -> Result<HttpResponse> {
             )
 ```
 ---
+
+このコードは、Actix-webを使用してWebアプリケーションを構築するための設定を行う部分です。以下は、コードの各部分についての説明です。
+
+```rust
+use actix_web::{App, HttpServer, web, middleware};
+use actix_files as fs;
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .wrap(cors)
+            .wrap(middleware::Logger::default())
+            .service(fs::Files::new("/", "./static").index_file("index.html"))
+            .service(
+                web::resource("/calculate")
+                    .route(web::post().to(calculate))
+                    .route(web::get().to(calculate))
+            )
+    })
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
+}
+```
+
+### 各部分の説明
+
+1. **`App::new()`**:
+   - 新しいActixアプリケーションを作成します。
+
+2. **`wrap(cors)`**:
+   - CORS (Cross-Origin Resource Sharing) ミドルウェアを追加します。これは、異なるオリジンからのリクエストを許可するために使用されます。
+   - 具体的なCORSの設定はこのコードには含まれていませんが、通常は事前に設定されます。
+
+3. **`wrap(middleware::Logger::default())`**:
+   - デフォルトのロガーミドルウェアを追加します。これは、リクエストとレスポンスのログを出力するために使用されます。
+
+4. **`service(fs::Files::new("/", "./static").index_file("index.html"))`**:
+   - 静的ファイルを提供するためのサービスを設定します。
+   - `"/"`ルートで、`./static`ディレクトリ内のファイルを提供します。
+   - `index_file("index.html")`は、ルートにアクセスした場合に`index.html`ファイルを返すように設定します。
+
+5. **`service(web::resource("/calculate").route(web::post().to(calculate)).route(web::get().to(calculate)))`**:
+   - `/calculate`エンドポイントに対するリソースを設定します。
+   - `web::post().to(calculate)`は、POSTリクエストを受け取った際に`calculate`ハンドラ関数を呼び出します。
+   - `web::get().to(calculate)`は、GETリクエストを受け取った際に`calculate`ハンドラ関数を呼び出します。
+
+### まとめ
+
+このコードは、Actix-webアプリケーションを設定して、以下のような機能を提供します：
+
+- CORS対応
+- リクエストとレスポンスのログ出力
+- 静的ファイルの提供（例：`index.html`）
+- `/calculate`エンドポイントへのPOSTおよびGETリクエストの処理
+
+この設定により、フロントエンドのリクエストを受け取り、適切に処理してレスポンスを返すことができます。
+
+---
 ```
                 .then(data => {
                     document.getElementById('result').innerText = `Lucas Number L${n} = ${data.result}`;
