@@ -95,4 +95,45 @@ python -m http.server
 
 これで、RustとWasmを使用した基本的なAjax通信が実現できます。より高度なエラーハンドリングやリクエストの種類（POSTなど）の対応は、この基本構造を拡張して行えます。
 
+
+---
+```
+
+```
+```
+
+```
+---
+## make_request
+```
+    <script type="module">
+        import init, { make_request } from "./pkg/my_wasm_project.js";
+        async function run() {
+            await init();
+            make_request("https://api.example.com/data");
+        }
+        run();
+    </script>
+
+```
+```
+
+pub fn make_request(url: &str) -> Result<JsValue, JsValue> {
+    let xhr = XmlHttpRequest::new().unwrap();
+    xhr.open("GET", url).unwrap();
+
+    let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
+        let response = xhr.response_text().unwrap().unwrap();
+        web_sys::console::log_1(&response.into());
+    }) as Box<dyn FnMut(_)>);
+
+    xhr.set_onload(Some(onload.as_ref().unchecked_ref()));
+    xhr.send().unwrap();
+
+    onload.forget();
+
+    Ok(JsValue::NULL)
+}
+
+```
 ---
